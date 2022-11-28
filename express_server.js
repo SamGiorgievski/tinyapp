@@ -54,7 +54,10 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  // const longURL = ...
+  const longURL = urlDatabase[req.params.id];
+  if (!urlDatabase[req.params.id]) {
+    res.send("Short ID does not exist");
+  }
   res.redirect(longURL);
 });
 
