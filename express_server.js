@@ -53,11 +53,19 @@ app.get("/", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars =  { user_id: req.cookies["user_id"], users}
+
+  if (req.cookies["user_id"]) {
+    res.redirect(`/urls`);
+  } 
   res.render("urls_login", templateVars);
 });
 
 app.get("/register", (req, res) => {
   const templateVars =  { user_id: req.cookies["user_id"], users}
+
+  if (req.cookies["user_id"]) {
+    res.redirect(`/urls`);
+  } 
   res.render("urls_register", templateVars);
 });
 
@@ -73,7 +81,11 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = { user_id: req.cookies["user_id"], users};
+
+if (req.cookies["user_id"]) {
   res.render("urls_new", templateVars);
+} 
+res.redirect(`/login`)
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -102,9 +114,14 @@ if (email === "" || pw === "") {
 });
 
 app.post("/urls", (req, res) => {
-  shortId = generateRandomString();
-  urlDatabase[shortId] = req.body.longURL;
-  res.redirect(`/urls/:${shortId}`);
+  
+  if (req.cookies["user_id"]) {
+    shortId = generateRandomString();
+    urlDatabase[shortId] = req.body.longURL;
+    res.redirect(`/urls/:${shortId}`);
+  }
+
+  res.status(401).send("You must be logged in to add URLs.")
 });
 
 // Login/out
@@ -150,7 +167,7 @@ app.post("/urls/:id/edit", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   if (!urlDatabase[req.params.id]) {
-    res.send("Short ID does not exist");
+    res.status(404).send("Short ID does not exist");
   }
   res.redirect(longURL);
 });
