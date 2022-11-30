@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+      crossorigin="anonymous"
+    />
+
+  <title>TinyApp</title>
+  <header>
+    <%- include('./partials/_header'); %>
+  </header>
+  
+  
+</head>
+<body>
+  <main style="margin: 1em;">
+  <h3>Welcome to TinyApp! </br>
+    Please register below:</h3>
+  
+  <form method="POST" action="/register">
+  </br>
+    <label for="newURL">Email </label>
+    <input type="email" name="email" style = "position:absolute; left:100px;">
+    <button style = "position:absolute; left:300px;" type="submit" class="btn btn-primary">Submit</button>
+  </br>
+</br>
+    <label for="newURL">Password</label>
+    <input type="password" name="password" style = "position:absolute; left:100px;">
+    <button type="submit" class="btn btn-primary" style = "position:absolute; left:300px;">Submit</button>
+  </form>
+</main>
+  
+</body>
+</html>

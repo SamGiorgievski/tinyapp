@@ -28,6 +28,10 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+app.get("/register", (req, res) => {
+  res.render("urls_register", { username: ""});
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -51,9 +55,13 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.post("/register", (req, res) => { // Registration
+  
+});
+
 app.post("/urls", (req, res) => {
   shortId = generateRandomString();
-  urlDatabase[shortId] = req.body.longURL; //fix
+  urlDatabase[shortId] = req.body.longURL;
   res.redirect(`/urls/:${shortId}`);
 });
 
