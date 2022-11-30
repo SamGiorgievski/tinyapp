@@ -19,9 +19,13 @@
         
         <% if(!users[user_id]){ %>
           <div style = "position:absolute; right:30px;">
-          <form method="POST" action="/login" > 
-          <input type="email" id ="logins" name="user_id" maxlength=15 placeholder="Email">
-          <button type="submit" class="btn btn-primary" >Login</button>
+            <form method="GET" action="/register" > 
+            <input type= "submit" name="register" value="Register">
+          </form>
+        </div>
+          <div style = "position:absolute; right:120px;">
+          <form method="GET" action="/login" > 
+          <input type= "submit" name="login" value="Login">
         </form>
       </div>
         

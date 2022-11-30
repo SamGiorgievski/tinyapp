@@ -18,13 +18,13 @@ function generateRandomString() {
   return result;
 }
 
-function doesUserExist(userEmail) {
+function lookUpUser(userEmail) {
   for (let user in users) {
     if (users[user].email === userEmail) {
-      return false
+      return user;
     }
-    return true
   }
+  return false
 }
 
 const urlDatabase = {
@@ -91,7 +91,7 @@ if (email === "" || pw === "") {
   res.status(400).send("Error: Must enter email and password"); 
 }
 
-  if (!doesUserExist(email)) {
+  if (lookUpUser(email)) {
     res.status(400).send("Error: Email already in use");
   } else {
   users[userId] = {"id": userId, "email": email, "password": pw};
@@ -109,13 +109,27 @@ app.post("/urls", (req, res) => {
 
 // Login/out
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.user_id);
+
+  const email = req.body.email
+  const password = req.body.password
+
+  if (!lookUpUser(email)) {
+    res.status(403).send("Invalid Email")
+  }
+
+  const userId = lookUpUser(email);
+
+  if (password !== users[userId].password) {
+    res.status(403).send("Invalid Password")
+  }
+
+  res.cookie("user_id", userId);
   res.redirect(`/urls/`);
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id", req.cookies["user_id"]);
-  res.redirect(`/urls/`);
+  res.redirect(`/login`);
 });
 
 // Edit/Delete
