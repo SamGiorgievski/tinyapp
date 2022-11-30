@@ -17,10 +17,10 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         
-        <% if(!username){ %>
+        <% if(!users[user_id]){ %>
           <div style = "position:absolute; right:30px;">
           <form method="POST" action="/login" > 
-          <input type="text" id ="logins" name="username" maxlength=15 placeholder="Username">
+          <input type="email" id ="logins" name="user_id" maxlength=15 placeholder="Email">
           <button type="submit" class="btn btn-primary" >Login</button>
         </form>
       </div>
@@ -29,7 +29,7 @@
           <div style = "position:absolute; right:30px;">
           
           <form method="POST" action="/logout"> 
-            <a>Signed in as: <%= username %></a>
+            <a>Signed in as: <%= users[user_id].email %></a>
             <button type="submit" class="btn btn-primary">Logout</button>
           </form>
         </div>
