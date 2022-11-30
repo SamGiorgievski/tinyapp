@@ -17,6 +17,7 @@ function generateRandomString() {
   return result;
 }
 
+//Probably need a find user function
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
