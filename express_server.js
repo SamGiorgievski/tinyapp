@@ -52,7 +52,7 @@ app.get("/hello", (req, res) => {
 
 app.post("/urls", (req, res) => {
   shortId = generateRandomString();
-  urlDatabase[shortId] = req.body;
+  urlDatabase[shortId] = req.body.longURL; //fix
   res.redirect(`/urls/:${shortId}`);
 });
 
