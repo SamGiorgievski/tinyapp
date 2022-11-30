@@ -7,6 +7,7 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+
 function generateRandomString() {
   var result           = '';
   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -17,12 +18,36 @@ function generateRandomString() {
   return result;
 }
 
+
 //Probably need a find user function
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+// User # for our user database
+let usercount = 2;
+
+function addUsercount() {
+  usercount += 1;
+  return usercount;
+}
+
+// user database
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -55,8 +80,16 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-app.post("/register", (req, res) => { // Registration
-  
+app.post("/register", (req, res) => { // Register
+  const userId = generateRandomString();
+  let email = req.body.email;
+  let pw = req.body.password;
+  let userNumber = addUsercount();
+  const randomUserId = `user${userNumber}RandomID`
+  users[randomUserId] = {"id": userId, "email": email, "password": pw};
+  console.log(users);
+  res.cookie("user_id", userId);
+  res.redirect(`/urls/`);
 });
 
 app.post("/urls", (req, res) => {
@@ -65,6 +98,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/:${shortId}`);
 });
 
+// Login/out
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username);
   res.redirect(`/urls/`);
@@ -75,6 +109,7 @@ app.post("/logout", (req, res) => {
   res.redirect(`/urls/`);
 });
 
+// Edit/Delete
 app.post("/urls/:id/delete", (req, res) => {
   shortId = req.params.id;
   delete urlDatabase[shortId];
@@ -88,6 +123,7 @@ app.post("/urls/:id/edit", (req, res) => {
   res.redirect(`/urls`);
 });
 
+// Route to longURL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   if (!urlDatabase[req.params.id]) {
