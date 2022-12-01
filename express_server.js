@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
 const { restart } = require("nodemon");
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -54,7 +55,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "$2a$10$tQZ88YkIjxnplobvic8Bpes5h.3ThuWt3U/lz8P7jehF74oBbyZAq",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -72,9 +73,11 @@ app.get("/login", (req, res) => {
   const templateVars =  { user_id: req.cookies["user_id"], users}
 
   if (req.cookies["user_id"]) {
-    res.redirect(`/urls`);
-  } 
-  res.render("urls_login", templateVars);
+    return res.redirect(`/urls`);
+  } else {
+    return res.render("urls_login", templateVars);
+  }
+  
 });
 
 app.get("/register", (req, res) => {
@@ -95,7 +98,6 @@ app.get("/urls.json", (req, res) => { //refactored url
 app.get("/urls", (req, res) => { //refactored url
   const userId = req.cookies["user_id"];
   const urlData = urlsForUser(userId);
-  console.log(urlData);
 
   if (req.cookies["user_id"]) { 
     const templateVars = { urls: urlData, user_id: req.cookies["user_id"], users};
@@ -122,24 +124,28 @@ app.get("/urls/:id", (req, res) => {
 // Register
 app.post("/register", (req, res) => { 
   const userId = generateRandomString();
-  let email = req.body.email;
-  let pw = req.body.password;
+  const email = req.body.email;
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
-if (email === "" || pw === "") {
+  console.log(hashedPassword);
+
+if (email === "" || password === "") {
   res.status(400).send("Error: Must enter email and password"); 
 }
 
   if (lookUpUser(email)) {
     res.status(400).send("Error: Email already in use");
   } else {
-  users[userId] = {"id": userId, "email": email, "password": pw};
+  users[userId] = {"id": userId, "email": email, "password": hashedPassword};
   res.cookie("user_id", userId);
   res.redirect(`/urls/`);
 }
 
 });
 
-app.post("/urls", (req, res) => { //refactored URL
+// Add urls
+app.post("/urls", (req, res) => {
   
   if (req.cookies["user_id"]) {
     shortId = generateRandomString();
@@ -156,18 +162,20 @@ app.post("/urls", (req, res) => { //refactored URL
 // Login/out
 app.post("/login", (req, res) => {
 
-  const email = req.body.email
-  const password = req.body.password
+  const enteredEmail = req.body.email
+  const enteredPassword = req.body.password
 
-  if (!lookUpUser(email)) {
+  if (!lookUpUser(enteredEmail)) {
     res.status(403).send("Invalid Email")
   }
 
-  const userId = lookUpUser(email);
+  const userId = lookUpUser(enteredEmail);
 
-  if (password !== users[userId].password) {
+  if (!bcrypt.compareSync(enteredPassword, users[userId].password)) {
     res.status(403).send("Invalid Password")
   }
+
+  // bcrypt.compareSync(enteredPassword, users[userId].password);
 
   res.cookie("user_id", userId);
   res.redirect(`/urls/`);
@@ -241,6 +249,7 @@ console.log(req.params.id);
     res.redirect(urls[req.params.id].longURL);
 
 });
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
