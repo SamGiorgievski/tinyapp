@@ -1,7 +1,8 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const { restart } = require("nodemon");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -27,9 +28,25 @@ function lookUpUser(userEmail) {
   return false
 }
 
+function urlsForUser(userId) {
+  let obj = {};
+  for (let data in urlDatabase) { // data = b2xVn2, 9sm5xK 
+    if (urlDatabase[data].userId === userId) {
+      obj[data] = urlDatabase[data];
+    }
+  }
+  return obj;
+}
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userId: "userRandomID"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userId: "user2RandomID"
+  }
 };
 
 // user database
@@ -69,14 +86,23 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+app.get("/urls.json", (req, res) => { //refactored url
+  const userId = req.cookies["user_id"];
+  const urlData = urlsForUser(userId);
+  res.json(urlData);
 });
 
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user_id: req.cookies["user_id"], users};
-  console.log(users);
-  res.render("urls_index", templateVars);
+app.get("/urls", (req, res) => { //refactored url
+  const userId = req.cookies["user_id"];
+  const urlData = urlsForUser(userId);
+  console.log(urlData);
+
+  if (req.cookies["user_id"]) { 
+    const templateVars = { urls: urlData, user_id: req.cookies["user_id"], users};
+    res.render("urls_index", templateVars);
+  } else {
+    res.status(403).send("Please login to view your URLs")
+  }
 });
 
 app.get("/urls/new", (req, res) => {
@@ -113,11 +139,14 @@ if (email === "" || pw === "") {
 
 });
 
-app.post("/urls", (req, res) => {
+app.post("/urls", (req, res) => { //refactored URL
   
   if (req.cookies["user_id"]) {
     shortId = generateRandomString();
-    urlDatabase[shortId] = req.body.longURL;
+    urlDatabase[shortId] = {
+      "longURL": req.body.longURL,
+      "userId": req.cookies["user_id"]
+  };
     res.redirect(`/urls/:${shortId}`);
   }
 
@@ -151,12 +180,38 @@ app.post("/logout", (req, res) => {
 
 // Edit/Delete
 app.post("/urls/:id/delete", (req, res) => {
+  
+  if (!req.cookies["user_id"]) { 
+    return res.status(403).send("Please login to view URLs");
+  } 
+
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send("Short ID does not exist");
+  } 
+
+  if (!urls[req.params.id]) {
+    return res.status(403).send("You do not own the URL");
+  } 
+  
   shortId = req.params.id;
   delete urlDatabase[shortId];
   res.redirect(`/urls`);
 });
 
 app.post("/urls/:id/edit", (req, res) => {
+  
+  if (!req.cookies["user_id"]) { 
+    return res.status(403).send("Please login to view URLs");
+  } 
+
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send("Short ID does not exist");
+  } 
+
+  if (!urls[req.params.id]) {
+    return res.status(403).send("You do not own the URL");
+  } 
+
   shortId = req.params.id;
   console.log(req.params)
   urlDatabase[shortId] = req.body.longURL;
@@ -165,11 +220,26 @@ app.post("/urls/:id/edit", (req, res) => {
 
 // Route to longURL
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  
+console.log(req.params.id);
+
+  if (!req.cookies["user_id"]) { 
+    return res.status(403).send("Please login to view URLs");
+  } 
+
   if (!urlDatabase[req.params.id]) {
-    res.status(404).send("Short ID does not exist");
-  }
-  res.redirect(longURL);
+    return res.status(404).send("Short ID does not exist");
+  } 
+  
+    const userId = req.cookies["user_id"];
+    const urls = urlsForUser(userId);
+
+    if (!urls[req.params.id]) {
+      return res.status(403).send("You do not own the URL");
+    } 
+  
+    res.redirect(urls[req.params.id].longURL);
+    
 });
 
 app.listen(PORT, () => {
