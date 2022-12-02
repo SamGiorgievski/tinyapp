@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080; 
 const cookieSession = require('cookie-session');
 const { restart } = require("nodemon");
 const bcrypt = require("bcryptjs");
@@ -26,7 +26,7 @@ const urlDatabase = {
   }
 };
 
-const users = {
+const userDatabase = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
@@ -39,7 +39,7 @@ const users = {
   },
 };
 
-// Web pages
+// GET routes
 app.get("/", (req, res) => {
 
   if (req.session.user_id) {
@@ -51,18 +51,18 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const templateVars =  { user_id: req.session.user_id, users}
+  const templateVars =  { "user_id": req.session.user_id, userDatabase}
 
   if (req.session.user_id) {
     return res.redirect(`/urls`);
   } else {
     return res.render("urls_login", templateVars);
   }
-  
+
 });
 
 app.get("/register", (req, res) => {
-  const templateVars =  { user_id: req.session.user_id, users}
+  const templateVars =  { "user_id": req.session.user_id, userDatabase}
 
   if (req.session.user_id) {
     return res.redirect(`/urls`);
@@ -70,38 +70,39 @@ app.get("/register", (req, res) => {
   return res.render("urls_register", templateVars);
 });
 
-app.get("/urls.json", (req, res) => { //refactored url
+app.get("/urls.json", (req, res) => { 
   const userId = req.session.user_id;
   const userUrls = urlsForUser(userId, urlDatabase);
-  res.json(userUrls);
+  return res.json(userUrls);
 });
 
-app.get("/urls", (req, res) => { //refactored url
+app.get("/urls", (req, res) => { 
   const userId = req.session.user_id;
   const userUrls = urlsForUser(userId, urlDatabase);
 
   if (req.session.user_id) { 
-    const templateVars = { urls: userUrls, user_id: req.session.user_id, users};
-    res.render("urls_index", templateVars);
+    const templateVars = { "urls": userUrls, "user_id": req.session.user_id, userDatabase};
+    return res.render("urls_index", templateVars);
   } else {
-    res.status(403).send("Please login to view your URLs")
+    return res.status(403).send("Please login to view your URLs");
   }
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user_id: req.session.user_id, users};
+  const templateVars = { "user_id": req.session.user_id, userDatabase};
 
   if (req.session.user_id) {
     return res.render("urls_new", templateVars);
   } else {
-    return res.redirect(`/login`)
+    return res.redirect(`/login`);
   }
 
 });
 
 app.get("/urls/:id", (req, res) => {
- 
-  if (!urlDatabase[req.params.id]) {
+  const shortURL = req.params.id;
+
+  if (!urlDatabase[shortURL]) {
     return res.status(404).send("Error, URL does not exist.");
  }
 
@@ -110,15 +111,17 @@ app.get("/urls/:id", (req, res) => {
  }
 
   const userUrls = urlsForUser(req.session.user_id, urlDatabase);
-  if (!userUrls[req.params.id]) {
+
+  if (!userUrls[shortURL]) {
     return res.status(403).send("Error, you may only view your own URLs.");
   }
 
-  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id].longURL, user_id: req.session.user_id, users};
+  const templateVars = { "shortURL": shortURL, "longURL": urlDatabase[shortURL].longURL, "user_id": req.session.user_id, userDatabase};
 
   return res.render("urls_show", templateVars);
 });
 
+// POST routes
 // Register
 app.post("/register", (req, res) => { 
   const email = req.body.email;
@@ -128,13 +131,13 @@ if (email === "" || password === "") {
   return res.status(400).send("Error, must enter email and password"); 
 }
 
-  if (getUserByEmail(email, users)) {
-    res.status(400).send("Error, email already in use");
+  if (getUserByEmail(email, userDatabase)) {
+    return res.status(400).send("Error, email already in use");
   } else {
     const hashedPassword = bcrypt.hashSync(password, 10);
     const userId = generateRandomString();
 
-    users[userId] = {"id": userId, "email": email, "password": hashedPassword};
+    userDatabase[userId] = {"id": userId, "email": email, "password": hashedPassword};
     
     req.session.user_id = userId;
     return res.redirect(`/urls/`);
@@ -165,14 +168,14 @@ app.post("/login", (req, res) => {
 
   const enteredEmail = req.body.email
 
-  if (!getUserByEmail(enteredEmail, users)) {
+  if (!getUserByEmail(enteredEmail, userDatabase)) {
     return res.status(400).send("Error, invalid Email")
   }
 
   const enteredPassword = req.body.password
-  const userId = getUserByEmail(enteredEmail, users);
+  const userId = getUserByEmail(enteredEmail, userDatabase);
 
-  if (!bcrypt.compareSync(enteredPassword, users[userId].password)) {
+  if (!bcrypt.compareSync(enteredPassword, userDatabase[userId].password)) {
     return res.status(400).send("Error, invalid Password")
   }
 
@@ -243,8 +246,7 @@ app.get("/u/:id", (req, res) => {
 
 });
 
+// Port
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-module.exports = users;
